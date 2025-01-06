@@ -185,18 +185,27 @@ export default {
           field: 'version',
           sortable: true,
           formatter: (value, row, index) => {
-            if (
-              Object.prototype.hasOwnProperty.call(row, 'repositoryMeta') &&
-              Object.prototype.hasOwnProperty.call(
-                row.repositoryMeta,
-                'latestVersion',
-              )
-            ) {
+            if (Object.prototype.hasOwnProperty.call(row, 'repositoryMeta')) {
               row.latestVersion = row.repositoryMeta.latestVersion;
-              if (
+              row.outdated = true;
+              if (row.repositoryMeta.deprecated) {
+                return (
+                  '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Deprecated component. ' +
+                  (Object.prototype.hasOwnProperty.call(
+                    row.repositoryMeta,
+                    'deprecationMessage',
+                  )
+                    ? row.repositoryMeta.deprecationMessage
+                    : 'Current version is: ' +
+                      xssFilters.inHTMLData(row.repositoryMeta.latestVersion)) +
+                  '"><i class="fa fa-exclamation-triangle status-failed" aria-hidden="true"></i></span> ' +
+                  xssFilters.inHTMLData(row.version)
+                );
+              } else if (
                 compareVersions(row.repositoryMeta.latestVersion, row.version) >
                 0
               ) {
+                row.outdated = true;
                 return (
                   '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Outdated component. Current version is: ' +
                   xssFilters.inHTMLData(row.repositoryMeta.latestVersion) +
@@ -207,6 +216,7 @@ export default {
                 compareVersions(row.repositoryMeta.latestVersion, row.version) <
                 0
               ) {
+                row.outdated = false;
                 // should be unstable then
                 return (
                   '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Unstable component. Current stable version is: ' +
@@ -215,6 +225,7 @@ export default {
                   xssFilters.inHTMLData(row.version)
                 );
               } else {
+                row.outdated = false;
                 return (
                   '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Component version is the latest available from the configured repositories"><i class="fa fa-check status-passed" aria-hidden="true"></i></span> ' +
                   xssFilters.inHTMLData(row.version)
@@ -232,6 +243,15 @@ export default {
           visible: false,
           formatter(value, row, index) {
             return xssFilters.inHTMLData(common.valueWithDefault(value, ''));
+          },
+        },
+        {
+          title: this.$t('message.outdated'),
+          field: 'outdated',
+          sortable: false,
+          visible: false,
+          formatter(value, row, index) {
+            return value === true ? '<i class="fa fa-check-square-o" />' : '';
           },
         },
         {

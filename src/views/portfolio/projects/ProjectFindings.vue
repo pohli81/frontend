@@ -180,6 +180,21 @@ export default {
           sortable: true,
           formatter(value, row, index) {
             if (
+              Object.prototype.hasOwnProperty.call(row.component, 'deprecated')
+            ) {
+              return (
+                '<span style="float:right" data-toggle="tooltip" data-placement="bottom" title="Risk: Deprecated component. ' +
+                (Object.prototype.hasOwnProperty.call(
+                  row.repositoryMeta,
+                  'deprecationMessage',
+                )
+                  ? row.repositoryMeta.deprecationMessage
+                  : 'Current version is: ' +
+                    xssFilters.inHTMLData(row.repositoryMeta.latestVersion)) +
+                '"><i class="fa fa-exclamation-triangle status-failed" aria-hidden="true"></i></span> ' +
+                xssFilters.inHTMLData(row.version)
+              );
+            } else if (
               Object.prototype.hasOwnProperty.call(
                 row.component,
                 'latestVersion',

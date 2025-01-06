@@ -600,6 +600,7 @@
     "operator": "Operator",
     "osi_approved": "OSI Approved",
     "outdated_only": "Outdated only",
+    "outdated": "Outdated",
     "overview": "Overview",
     "owasp_rr": "OWASP Risk Rating",
     "owasp_rr_awareness": "Awareness",
