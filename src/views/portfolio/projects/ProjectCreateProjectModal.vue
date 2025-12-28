@@ -83,6 +83,7 @@
             :tags="collectionTags"
             :add-on-key="addOnKeys"
             :placeholder="$t('message.project_add_collection_tag')"
+            :autocomplete-items="tagsAutoCompleteItems"
             @tags-changed="
               (newCollectionTags) => (this.collectionTags = newCollectionTags)
             "
@@ -309,13 +310,21 @@ export default {
   },
   beforeMount() {
     this.$root.$on('initializeProjectCreateProjectModal', async () => {
+      this.resetValues();
+      await this.getACLEnabled();
+      await this.getAvailableTeams();
       await this.retrieveLicenses();
       this.$root.$emit('bv::show::modal', 'projectCreateProjectModal');
     });
   },
   computed: {},
   watch: {
-    tag: 'searchTags',
+    tag(input) {
+      this.searchTags(input);
+    },
+    collectionTagTyping(input) {
+      this.searchTags(input);
+    },
   },
   methods: {
     async getACLEnabled() {
@@ -336,6 +345,8 @@ export default {
       if (this.requiresTeam && this.availableTeams.length == 1) {
         this.project.team = this.availableTeams[0].value;
         this.isDisabled = true;
+      } else {
+        this.isDisabled = false;
       }
       this.availableTeams.sort(function (a, b) {
         return a.text.localeCompare(b.text);
@@ -437,6 +448,7 @@ export default {
         collectionLogic: 'NONE', // set default to regular project
         team: [],
       };
+      this.isDisabled = false;
       this.tag = '';
       this.tags = [];
       this.selectedParent = null;
@@ -465,14 +477,14 @@ export default {
         });
       }
     },
-    searchTags: function () {
-      if (!this.tag) {
+    searchTags: function (input) {
+      if (!input) {
         return;
       }
 
       clearTimeout(this.tagsAutoCompleteDebounce);
       this.tagsAutoCompleteDebounce = setTimeout(() => {
-        const url = `${this.$api.BASE_URL}/${this.$api.URL_TAG}?searchText=${encodeURIComponent(this.tag)}&pageNumber=1&pageSize=6`;
+        const url = `${this.$api.BASE_URL}/${this.$api.URL_TAG}?searchText=${encodeURIComponent(input)}&pageNumber=1&pageSize=6`;
         this.axios.get(url).then((response) => {
           this.tagsAutoCompleteItems = response.data.map((tag) => {
             return { text: tag.name };

@@ -72,7 +72,7 @@
                   </ol>
                   {{ project.version }}
                   <i
-                    v-if="isCollectionProject()"
+                    v-if="isCollectionProject"
                     class="fa fa-calculator fa-fw collectionlogic-icon"
                     v-b-tooltip.hover="{
                       title: getCollectionLogicText(project),
@@ -233,7 +233,7 @@
       <b-tab
         ref="components"
         @click="routeTo('components')"
-        v-if="isShowComponents()"
+        v-if="isShowComponents"
       >
         <template v-slot:title
           ><i class="fa fa-cubes"></i> {{ $t('message.components') }}
@@ -249,7 +249,7 @@
       <b-tab
         ref="collectionprojects"
         @click="routeTo('collectionprojects')"
-        v-if="isShowCollectionProjects()"
+        v-if="isShowCollectionProjects"
         lazy
       >
         <template v-slot:title
@@ -262,11 +262,7 @@
           :project="this.project"
         />
       </b-tab>
-      <b-tab
-        ref="services"
-        @click="routeTo('services')"
-        v-if="isShowServices()"
-      >
+      <b-tab ref="services" @click="routeTo('services')" v-if="isShowServices">
         <template v-slot:title
           ><i class="fa fa-exchange"></i> {{ $t('message.services') }}
           <b-badge variant="tab-total">{{ totalServices }}</b-badge></template
@@ -280,7 +276,7 @@
       <b-tab
         ref="dependencygraph"
         @click="routeTo('dependencyGraph')"
-        v-if="isShowDependencyGraph()"
+        v-if="isShowDependencyGraph"
       >
         <template v-slot:title
           ><i class="fa fa-sitemap"></i> {{ $t('message.dependency_graph') }}
@@ -295,11 +291,7 @@
           v-on:total="totalDependencyGraphs = $event"
         />
       </b-tab>
-      <b-tab
-        ref="findings"
-        v-if="isShowFindings()"
-        @click="routeTo('findings')"
-      >
+      <b-tab ref="findings" v-if="isShowFindings" @click="routeTo('findings')">
         <template v-slot:title>
           <i class="fa fa-tasks"></i> {{ $t('message.audit_vulnerabilities') }}
           <b-badge
@@ -321,7 +313,7 @@
           v-on:total="totalFindingsIncludingAliases = $event"
         />
       </b-tab>
-      <b-tab ref="epss" v-if="isShowFindings()" @click="routeTo('epss')">
+      <b-tab ref="epss" v-if="isShowFindings" @click="routeTo('epss')">
         <template v-slot:title
           ><i class="fa fa-tasks"></i> {{ $t('message.exploit_predictions') }}
           <b-badge variant="tab-total">{{ totalEpss }}</b-badge></template
@@ -334,7 +326,7 @@
       </b-tab>
       <b-tab
         ref="policyviolations"
-        v-if="isShowPolicyViolations()"
+        v-if="isShowPolicyViolations"
         @click="routeTo('policyViolations')"
       >
         <template v-slot:title
@@ -344,9 +336,10 @@
             v-b-tooltip.hover
             :title="$t('policy_violation.total')"
             >{{
-              showSuppressedViolations
+              policyViolationsTotal
+              /*showSuppressedViolations
                 ? policyViolationsTotal
-                : policyViolationsUnaudited
+                : policyViolationsUnaudited*/
             }}</b-badge
           >
           <b-badge
@@ -354,9 +347,10 @@
             v-b-tooltip.hover
             :title="$t('policy_violation.infos')"
             >{{
-              showSuppressedViolations
+              policyViolationsInfoTotal
+              /*showSuppressedViolations
                 ? policyViolationsInfoTotal
-                : policyViolationsInfoUnaudited
+                : policyViolationsInfoUnaudited*/
             }}</b-badge
           >
           <b-badge
@@ -364,9 +358,10 @@
             v-b-tooltip.hover
             :title="$t('policy_violation.warns')"
             >{{
-              showSuppressedViolations
+              policyViolationsWarnTotal
+              /*showSuppressedViolations
                 ? policyViolationsWarnTotal
-                : policyViolationsWarnUnaudited
+                : policyViolationsWarnUnaudited*/
             }}</b-badge
           >
           <b-badge
@@ -374,9 +369,10 @@
             v-b-tooltip.hover
             :title="$t('policy_violation.fails')"
             >{{
-              showSuppressedViolations
+              policyViolationsFailTotal
+              /*showSuppressedViolations
                 ? policyViolationsFailTotal
-                : policyViolationsFailUnaudited
+                : policyViolationsFailUnaudited*/
             }}</b-badge
           >
         </template>
@@ -457,6 +453,33 @@ export default {
     inactiveProjectVersions() {
       return this.project.versions.filter((version) => !version.active);
     },
+    isCollectionProject() {
+      return this.project.collectionLogic !== 'NONE';
+    },
+    isShowComponents() {
+      return !this.isCollectionProject;
+    },
+    isShowCollectionProjects() {
+      return this.isCollectionProject;
+    },
+    isShowServices() {
+      return !this.isCollectionProject;
+    },
+    isShowDependencyGraph() {
+      return !this.isCollectionProject;
+    },
+    isShowFindings() {
+      return (
+        !this.isCollectionProject &&
+        this.isPermitted(this.PERMISSIONS.VIEW_VULNERABILITY)
+      );
+    },
+    isShowPolicyViolations() {
+      return (
+        !this.isCollectionProject &&
+        this.isPermitted(this.PERMISSIONS.VIEW_POLICY_VIOLATION)
+      );
+    },
   },
   data() {
     return {
@@ -485,11 +508,14 @@ export default {
       policyViolationsTotal: 0,
       policyViolationsUnaudited: 0,
       policyViolationsFailTotal: 0,
-      policyViolationsFailUnaudited: 0,
+      // TODO: Requires https://github.com/DependencyTrack/dependency-track/pull/3615.
+      // policyViolationsFailUnaudited: 0,
       policyViolationsWarnTotal: 0,
-      policyViolationsWarnUnaudited: 0,
+      // TODO: Requires https://github.com/DependencyTrack/dependency-track/pull/3615.
+      // policyViolationsWarnUnaudited: 0,
       policyViolationsInfoTotal: 0,
-      policyViolationsInfoUnaudited: 0,
+      // TODO: Requires https://github.com/DependencyTrack/dependency-track/pull/3615.
+      // policyViolationsInfoUnaudited: 0,
       tabIndex: 0,
     };
   },
@@ -507,7 +533,7 @@ export default {
     },
     initialize: function () {
       let projectUrl = `${this.$api.BASE_URL}/${this.$api.URL_PROJECT}/${this.uuid}`;
-      this.axios
+      return this.axios
         .get(projectUrl)
         .catch((error) => {
           if (error.response.status === 403) {
@@ -557,29 +583,32 @@ export default {
             0,
           );
           this.policyViolationsFailTotal = common.valueWithDefault(
-            this.project.metrics.policyViolationsFailTotal,
+            this.project.metrics.policyViolationsFail,
             0,
           );
-          this.policyViolationsFailUnaudited = common.valueWithDefault(
-            this.project.metrics.policyViolationsFailUnaudited,
-            0,
-          );
+          // TODO: Requires https://github.com/DependencyTrack/dependency-track/pull/3615.
+          // this.policyViolationsFailUnaudited = common.valueWithDefault(
+          //   this.project.metrics.policyViolationsFailUnaudited,
+          //   0,
+          // );
           this.policyViolationsWarnTotal = common.valueWithDefault(
-            this.project.metrics.policyViolationsWarnTotal,
+            this.project.metrics.policyViolationsWarn,
             0,
           );
-          this.policyViolationsWarnUnaudited = common.valueWithDefault(
-            this.project.metrics.policyViolationsWarnUnaudited,
-            0,
-          );
+          // TODO: Requires https://github.com/DependencyTrack/dependency-track/pull/3615.
+          // this.policyViolationsWarnUnaudited = common.valueWithDefault(
+          //   this.project.metrics.policyViolationsWarnUnaudited,
+          //   0,
+          // );
           this.policyViolationsInfoTotal = common.valueWithDefault(
-            this.project.metrics.policyViolationsInfoTotal,
+            this.project.metrics.policyViolationsInfo,
             0,
           );
-          this.policyViolationsInfoUnaudited = common.valueWithDefault(
-            this.project.metrics.policyViolationsInfoUnaudited,
-            0,
-          );
+          // TODO: Requires https://github.com/DependencyTrack/dependency-track/pull/3615.
+          // this.policyViolationsInfoUnaudited = common.valueWithDefault(
+          //   this.project.metrics.policyViolationsInfoUnaudited,
+          //   0,
+          // );
           EventBus.$emit('addCrumb', this.projectLabel);
           this.$title = this.projectLabel;
         });
@@ -632,50 +661,25 @@ export default {
       }
       return '';
     },
-    isCollectionProject: function () {
-      return this.project.collectionLogic !== 'NONE';
-    },
-    isShowComponents: function () {
-      return !this.isCollectionProject();
-    },
-    isShowCollectionProjects: function () {
-      return this.isCollectionProject();
-    },
-    isShowServices: function () {
-      return !this.isCollectionProject();
-    },
-    isShowDependencyGraph: function () {
-      return !this.isCollectionProject();
-    },
-    isShowFindings: function () {
-      return (
-        !this.isCollectionProject() &&
-        this.isPermitted(this.PERMISSIONS.VIEW_VULNERABILITY)
-      );
-    },
-    isShowPolicyViolations: function () {
-      return (
-        !this.isCollectionProject() &&
-        this.isPermitted(this.PERMISSIONS.VIEW_POLICY_VIOLATION)
-      );
-    },
   },
   beforeMount() {
     this.uuid = this.$route.params.uuid;
-    this.initialize();
-  },
-  mounted() {
-    try {
-      if (this.$route.params.componentUuids) {
-        this.$refs.dependencygraph.active = true;
-      } else {
-        this.getTabFromRoute().active = true;
-      }
-    } catch (e) {
-      this.$toastr.e(this.$t('condition.forbidden'));
-      this.$router.replace({ path: '/projects/' + this.uuid });
-      this.$refs.overview.active = true;
-    }
+    this.initialize()
+      .then(() => {
+        this.$nextTick(() => {
+          if (this.$route.params.componentUuids) {
+            this.$refs.dependencygraph.active = true;
+          } else {
+            this.getTabFromRoute().active = true;
+          }
+        });
+      })
+      .catch((e) => {
+        console.error(e);
+        this.$toastr.e(this.$t('condition.forbidden'));
+        this.$router.replace({ path: '/projects/' + this.uuid });
+        this.$refs.overview.active = true;
+      });
   },
   watch: {
     $route(to, from) {

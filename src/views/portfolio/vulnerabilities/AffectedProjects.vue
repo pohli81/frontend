@@ -63,7 +63,7 @@ export default {
             const url = this.$router.resolve({
               name: 'Project Vulnerability Lookup',
               params: { uuid: row.uuid, vulnerability: this.vulnerability },
-            }).href;
+            }).route.fullPath;
 
             let html = `<a href="${url}">${xssFilters.inHTMLData(value)}</a>`;
             if (row.dependencyGraphAvailable) {
@@ -151,6 +151,10 @@ export default {
       this.$refs.table.showLoading();
       this.currentPage = 1;
       this.refreshTable();
+    },
+    vulnId() {
+      // update url when vulnId changes, will trigger table refresh
+      this.$refs.table.refreshOptions({ ...this.options, url: this.apiUrl() });
     },
   },
 };
